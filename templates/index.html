@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>NetSpeed — Live LAN & WAN</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Inline SVG favicon (CC0-like): simple speedometer glyph -->
+  <!-- Inline SVG favicon (free/inline) -->
   <link rel="icon" href='data:image/svg+xml;utf8,
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
     <circle cx="32" cy="32" r="28" fill="%23ffffff" stroke="%23000" stroke-width="2"/>
@@ -25,9 +25,7 @@
       color:var(--text); font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     }
     .wrap{max-width:1200px; margin:24px auto; padding:0 16px;}
-    header{
-      display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px;
-    }
+    header{display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px;}
     .brand{display:flex; gap:12px; align-items:center;}
     .brand .logo{
       width:36px; height:36px; border-radius:12px; background:
@@ -172,7 +170,7 @@
     function setText(id, txt){ $(id).textContent = txt; }
     function logErr(msg){ $("log").textContent = msg; }
 
-    // Robust fetch with retry (useful if cron saturates network briefly)
+    // Robust fetch with retry (helps if cron run momentarily saturates the host)
     async function safeFetch(url, opts, retries=2){
       for(let i=0;i<=retries;i++){
         try{
@@ -225,7 +223,7 @@
         if(s>0) setText("ul-mbps", ((total*8/1e6)/s).toFixed(2));
         setBar("ul-bar", Math.min(100, (total/size)*100));
       }
-      const seconds = (performance.now()-t0)/1000;
+      const seconds = (performance.now() - t0)/1000;
       const mbps = seconds>0 ? (total*8/1e6)/seconds : 0;
       return {bytes: total, seconds, mbps};
     }
@@ -277,7 +275,7 @@
         type:'line',
         data:{labels:lanLabels, datasets:[
           {label:'LAN Download (Mbps)', data:dSeries, fill:false, tension:.25},
-          {label:'LAN Upload (Mbps)',   data:uSeries, fill:false, tension:.25},
+          {label:'LAN Upload (Mbps)',   data:uSeries,   fill:false, tension:.25},
         ]},
         options:{responsive:true, scales:{y:{beginAtZero:true, title:{display:true,text:'Mbps'}}}}
       });
@@ -291,7 +289,7 @@
       }catch(_){}
     }
 
-    // -------- Buttons (Run ALL is at the top, not inside WAN) --------
+    // -------- Buttons --------
     $("btn-ping").onclick = async ()=>{
       $("lan-out").textContent = "Pinging (5 samples)…";
       try{
@@ -349,7 +347,6 @@
     };
 
     $("btn-all").onclick = async ()=>{
-      // Top-level "Run ALL": LAN both → ask server to run WAN and send 1 Telegram
       const size = parseInt($("size").value,10), streams = parseInt($("streams").value,10);
       setBar("dl-bar",0); setBar("ul-bar",0); $("lan-out").textContent = "Running DL→UL…";
       try{
@@ -361,21 +358,11 @@
           body:JSON.stringify({kind:"lan_down", mbps:d.mbps, bytes:d.bytes, seconds:d.seconds})});
         await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({kind:"lan_up",   mbps:u.mbps, bytes:u.bytes, seconds:u.seconds})});
-        // ask server to do WAN + Telegram (one consolidated message)
         $("wan-out").textContent = "WAN starting…";
-        const res = await safeFetch("/api/run-all",{method:"POST",headers:{"Content-Type":"application/json"},
+        // Kick off server-side WAN + Telegram; results come via SSE 'wan_done'
+        await safeFetch("/api/run-all",{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({lan_down:{mbps:d.mbps,bytes:d.bytes,seconds:d.seconds},
                                lan_up:{mbps:u.mbps,bytes:u.bytes,seconds:u.seconds}})});
-        const j = await res.json();
-        if(j.ok){
-          $("wan-out").textContent = "WAN: ↓ "+Number(j.down_mbps||0).toFixed(2)+" Mbps, ↑ "+Number(j.up_mbps||0).toFixed(2)+" Mbps, ping "+Number(j.ping_ms||0).toFixed(1)+" ms\nServer: "+(j.server||"");
-          setText("wan-dl", Number(j.down_mbps||0).toFixed(2));
-          setText("wan-ul", Number(j.up_mbps||0).toFixed(2));
-          setText("wan-ping", Number(j.ping_ms||0).toFixed(1));
-        }else{
-          $("wan-out").textContent = "Run-all failed: "+(j.error||"unknown");
-        }
-        refresh();
       }catch(_){}
     };
 
@@ -420,7 +407,7 @@
       }catch(e){ logErr("SSE not available: "+e.message); }
     })();
 
-    // fallback: refresh every 30s (if cron overlaps)
+    // fallback: refresh every 30s
     setInterval(()=>{ refresh(); }, 30000);
     refresh();
   });

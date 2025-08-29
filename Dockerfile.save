@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends tini && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python deps
+RUN pip install --no-cache-dir flask gunicorn SQLAlchemy apscheduler speedtest-cli
+
+# App
+WORKDIR /app
+COPY app.py /app/app.py
+
+# Data dir for SQLite
+RUN mkdir -p /data
+ENV DB_PATH=/data/netspeed.sqlite
+ENV PORT=8080
+
+# Scheduling: every 30 min by default; set to "off" to disable
+ENV WAN_SCHEDULE_CRON=*/30 * * * *
+
+# Web threads/workers
+#ENV GUNICORN_CMD_ARGS="--threads 8 --workers 1 --timeout 120 --graceful-timeout 30"
+
+EXPOSE 8080
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:app"]

@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NetSpeed — Live LAN & WAN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Inline SVG favicon (CC0-like): simple speedometer glyph -->
+  <link rel="icon" href='data:image/svg+xml;utf8,
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="28" fill="%23ffffff" stroke="%23000" stroke-width="2"/>
+    <path d="M10 36a22 22 0 1 1 44 0" fill="none" stroke="%23000" stroke-width="3"/>
+    <circle cx="32" cy="36" r="3" fill="%23000"/>
+    <path d="M32 36 L48 24" stroke="%23e74c3c" stroke-width="3" stroke-linecap="round"/>
+  </svg>' />
+
+  <style>
+    :root{
+      --bg: #0b1020; --card:#131a2a; --card2:#10182a; --text:#e8eef9; --muted:#a6b1c6;
+      --accent:#4c8bf5; --accent2:#7c4cf5; --line:#263047; --ok:#19c37d; --err:#ff5252;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background: radial-gradient(1200px 600px at 20% -10%, #172241 0%, #0b1020 60%, #080d1a 100%);
+      color:var(--text); font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    .wrap{max-width:1200px; margin:24px auto; padding:0 16px;}
+    header{
+      display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px;
+    }
+    .brand{display:flex; gap:12px; align-items:center;}
+    .brand .logo{
+      width:36px; height:36px; border-radius:12px; background:
+        radial-gradient(200px 100px at 10% 10%, #5facff 0, #4c8bf5 40%, #7c4cf5 100%);
+      box-shadow: 0 6px 24px rgba(124,76,245,.4), inset 0 0 18px rgba(255,255,255,.35);
+    }
+    .brand h1{margin:0; font-size:20px; letter-spacing:.2px}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    button,.chip,select{background:var(--card); color:var(--text); border:1px solid var(--line);
+      border-radius:10px; padding:.6rem .9rem; cursor:pointer}
+    button:hover{border-color:#3b4a6e}
+    .chip{font-size:.86rem}
+    .grid{display:grid; gap:16px; grid-template-columns: 1fr; }
+    @media(min-width:960px){ .grid{ grid-template-columns: 1fr 1fr; } }
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid var(--line); border-radius:16px; padding:16px; backdrop-filter: blur(6px);}
+    h2{margin:.2rem 0 1rem; font-size:1.1rem; color:#f3f6ff}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .metric{display:inline-flex; gap:8px; align-items:center; background:var(--card); border:1px solid var(--line);
+      border-radius:999px; padding:.25rem .6rem; font-size:.9rem}
+    .bar{height:10px; background:#0f1630; border:1px solid var(--line); border-radius:999px; overflow:hidden}
+    .fill{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .2s}
+    .out{white-space:pre-wrap; background:var(--card2); border:1px dashed var(--line); border-radius:12px; padding:.75rem; margin-top:.75rem; color:#dfe6ff}
+    .charts{display:grid; gap:16px; grid-template-columns:1fr; }
+    @media(min-width:1100px){ .charts{grid-template-columns:1fr 1fr} }
+    canvas{width:100%; height:340px; background: #0a1229; border:1px solid var(--line); border-radius:12px; padding:8px}
+    table{width:100%; border-collapse: collapse; font-size:.95rem;}
+    th,td{border-bottom:1px solid var(--line); padding:8px 10px; text-align:left}
+    th{color:#cdd6ef; background:#0f1731}
+    #log{margin:.5rem 0 0; color:var(--err)}
+    .badge{display:inline-flex; align-items:center; gap:6px; padding:.25rem .6rem; border:1px solid var(--line);
+      border-radius:999px; background:var(--card); font-size:.85rem}
+    .dot{width:8px;height:8px;border-radius:999px;background:#8fa3d9}
+    .dot.ok{background:var(--ok)} .dot.err{background:var(--err)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>NetSpeed</h1>
+          <div class="muted" style="font-size:.9rem">Live LAN & WAN • History • Charts • Telegram Alerts</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="btn-all">▶ Run ALL (LAN DL→UL → WAN & Telegram)</button>
+        <span class="badge"><span class="dot" id="sse-dot"></span> Live</span>
+        <span class="badge">Schedule: {{ 'on' if schedule_on else 'off' }}{% if schedule_on %} ({{ cron }}){% endif %}</span>
+      </div>
+    </header>
+
+    <div id="log"></div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>LAN (Browser ⇄ Container)</h2>
+        <div class="row" style="margin-bottom:8px">
+          <label for="size" class="muted">Size</label>
+          <select id="size">
+            <option value="10485760">10 MB</option>
+            <option value="52428800">50 MB</option>
+            <option value="104857600" selected>100 MB</option>
+            <option value="268435456">256 MB</option>
+            <option value="536870912">512 MB</option>
+          </select>
+          <label for="streams" class="muted">Streams</label>
+          <select id="streams">
+            <option>1</option><option>2</option><option selected>4</option><option>6</option><option>8</option>
+          </select>
+          <button id="btn-ping">Ping</button>
+          <button id="btn-down">Download</button>
+          <button id="btn-up">Upload</button>
+          <button id="btn-both">Run Both (DL→UL)</button>
+        </div>
+
+        <div class="row" style="margin:6px 0 10px">
+          <span class="metric">DL <strong id="dl-mbps">0.00</strong> Mbps</span>
+          <span class="metric">UL <strong id="ul-mbps">0.00</strong> Mbps</span>
+          <span class="metric">Ping <strong id="ping-ms">–</strong> ms</span>
+        </div>
+
+        <div class="row" style="gap:16px">
+          <div style="flex:1">
+            <div class="muted" style="margin-bottom:6px">Download progress</div>
+            <div class="bar"><div id="dl-bar" class="fill"></div></div>
+          </div>
+          <div style="flex:1">
+            <div class="muted" style="margin-bottom:6px">Upload progress</div>
+            <div class="bar"><div id="ul-bar" class="fill"></div></div>
+          </div>
+        </div>
+
+        <div class="out" id="lan-out">Ready.</div>
+      </section>
+
+      <section class="card">
+        <h2>WAN (Container ⇄ Internet)</h2>
+        <div class="row" style="margin-bottom:8px">
+          <button id="btn-wan">Run WAN speed test</button>
+        </div>
+        <div class="row" style="margin:6px 0 10px">
+          <span class="metric">WAN ↓ <strong id="wan-dl">–</strong> Mbps</span>
+          <span class="metric">WAN ↑ <strong id="wan-ul">–</strong> Mbps</span>
+          <span class="metric">ping <strong id="wan-ping">–</strong> ms</span>
+        </div>
+        <div class="out" id="wan-out">Idle.</div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Charts</h2>
+      <div class="charts">
+        <div>
+          <div class="muted" style="margin-bottom:6px">WAN Mbps (down/up)</div>
+          <canvas id="wanChart"></canvas>
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px">LAN Mbps (down/up)</div>
+          <canvas id="lanChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>History</h2>
+      <div class="row" style="margin-bottom:8px">
+        <button id="refresh">Refresh</button>
+        <span class="muted">Auto-refresh + live updates via SSE</span>
+      </div>
+      <div id="hist"></div>
+    </section>
+  </div>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function(){
+    function $(id){ return document.getElementById(id); }
+    function setBar(id, pct){ $(id).style.width = Math.max(0, Math.min(100, pct)) + "%"; }
+    function setText(id, txt){ $(id).textContent = txt; }
+    function logErr(msg){ $("log").textContent = msg; }
+
+    // Robust fetch with retry (useful if cron saturates network briefly)
+    async function safeFetch(url, opts, retries=2){
+      for(let i=0;i<=retries;i++){
+        try{
+          const res = await fetch(url, Object.assign({cache:"no-store"}, opts||{}));
+          if(!res.ok) throw new Error(res.status + " " + res.statusText);
+          return res;
+        }catch(e){
+          if(i===retries){ logErr("Fetch error for "+url+": "+e.message); throw e; }
+          await new Promise(r=>setTimeout(r, 800*(i+1)));
+        }
+      }
+    }
+
+    // -------- Live LAN helpers --------
+    async function runDownload(size, streams){
+      const each = Math.floor(size/streams);
+      const urls = Array.from({length: streams}, ()=>"/download?size="+each+"&_="+Math.random());
+      let totalBytes = 0; const t0 = performance.now();
+      await Promise.all(urls.map(async (u)=>{
+        const r = await safeFetch(u);
+        if(!r.body || !r.body.getReader){
+          const buf = await r.arrayBuffer();
+          totalBytes += buf.byteLength;
+          const s = (performance.now()-t0)/1000; if(s>0) setText("dl-mbps", ((totalBytes*8/1e6)/s).toFixed(2));
+          setBar("dl-bar", Math.min(100, (totalBytes/size)*100)); return;
+        }
+        const rd = r.body.getReader();
+        while(true){
+          const step = await rd.read();
+          if(step.done) break;
+          totalBytes += step.value.byteLength;
+          const s = (performance.now()-t0)/1000;
+          if(s>0) setText("dl-mbps", ((totalBytes*8/1e6)/s).toFixed(2));
+          setBar("dl-bar", Math.min(100, (totalBytes/size)*100));
+        }
+      }));
+      const seconds = (performance.now()-t0)/1000;
+      const mbps = seconds>0 ? (totalBytes*8/1e6)/seconds : 0;
+      return {bytes: totalBytes, seconds, mbps};
+    }
+
+    async function runUpload(size, streams){
+      const chunk = Math.floor(size/streams) || size;
+      let total = 0; const t0 = performance.now();
+      for(let i=0;i<streams;i++){
+        const buf = new Uint8Array(chunk);
+        await safeFetch("/upload",{method:"POST", body:buf});
+        total += buf.byteLength;
+        const s = (performance.now()-t0)/1000;
+        if(s>0) setText("ul-mbps", ((total*8/1e6)/s).toFixed(2));
+        setBar("ul-bar", Math.min(100, (total/size)*100));
+      }
+      const seconds = (performance.now()-t0)/1000;
+      const mbps = seconds>0 ? (total*8/1e6)/seconds : 0;
+      return {bytes: total, seconds, mbps};
+    }
+
+    async function pingOnce(){
+      const t0 = performance.now();
+      const r = await safeFetch("/ping?_="+Math.random());
+      await r.text();
+      return performance.now() - t0;
+    }
+
+    // -------- Charts & history --------
+    let wanChart, lanChart;
+    function renderTable(rows){
+      if(!rows || !rows.length) return "<p class='muted'>No results yet.</p>";
+      let h = "<table><thead><tr><th>Time (UTC)</th><th>Kind</th><th>Mbps</th><th>Ping</th><th>Server</th></tr></thead><tbody>";
+      for(const r of rows){
+        h += "<tr><td>"+r.ts_utc+"</td><td>"+r.kind+"</td><td>"+(r.mbps==null?"":Number(r.mbps).toFixed(2))+"</td><td>"+(r.ping_ms==null?"":Number(r.ping_ms).toFixed(1)+" ms")+"</td><td>"+(r.server||"")+"</td></tr>";
+      }
+      h += "</tbody></table>";
+      return h;
+    }
+    function buildCharts(items){
+      const rows = items.slice().sort((a,b)=> new Date(a.ts_utc)-new Date(b.ts_utc));
+      const wanDown = rows.filter(r=>r.kind==="wan_down");
+      const wanUp   = rows.filter(r=>r.kind==="wan_up");
+      const lanDown = rows.filter(r=>r.kind==="lan_down");
+      const lanUp   = rows.filter(r=>r.kind==="lan_up");
+      const wanLabels = wanDown.map(r=>r.ts_utc);
+      const lanLabels = Array.from(new Set(lanDown.map(r=>r.ts_utc).concat(lanUp.map(r=>r.ts_utc)))).sort();
+
+      if(wanChart) wanChart.destroy();
+      if(lanChart) lanChart.destroy();
+
+      wanChart = new Chart(document.getElementById("wanChart").getContext("2d"), {
+        type:'line',
+        data:{labels:wanLabels, datasets:[
+          {label:'WAN Download (Mbps)', data:wanDown.map(r=>r.mbps), fill:false, tension:.25},
+          {label:'WAN Upload (Mbps)',   data:wanUp.map(r=>r.mbps),   fill:false, tension:.25},
+        ]},
+        options:{responsive:true, scales:{y:{beginAtZero:true, title:{display:true,text:'Mbps'}}}}
+      });
+
+      const dMap = Object.fromEntries(lanDown.map(r=>[r.ts_utc,r.mbps]));
+      const uMap = Object.fromEntries(lanUp.map(r=>[r.ts_utc,r.mbps]));
+      const dSeries = lanLabels.map(t=> (t in dMap)?dMap[t]:null);
+      const uSeries = lanLabels.map(t=> (t in uMap)?uMap[t]:null);
+      lanChart = new Chart(document.getElementById("lanChart").getContext("2d"), {
+        type:'line',
+        data:{labels:lanLabels, datasets:[
+          {label:'LAN Download (Mbps)', data:dSeries, fill:false, tension:.25},
+          {label:'LAN Upload (Mbps)',   data:uSeries, fill:false, tension:.25},
+        ]},
+        options:{responsive:true, scales:{y:{beginAtZero:true, title:{display:true,text:'Mbps'}}}}
+      });
+    }
+    async function refresh(){
+      try{
+        const res = await safeFetch("/api/results?limit=500");
+        const data = await res.json();
+        document.getElementById("hist").innerHTML = renderTable(data.items||[]);
+        buildCharts(data.items||[]);
+      }catch(_){}
+    }
+
+    // -------- Buttons (Run ALL is at the top, not inside WAN) --------
+    $("btn-ping").onclick = async ()=>{
+      $("lan-out").textContent = "Pinging (5 samples)…";
+      try{
+        const samples=[]; for(let i=0;i<5;i++) samples.push(await pingOnce());
+        const avg = samples.reduce((a,b)=>a+b,0)/samples.length;
+        setText("ping-ms", avg.toFixed(1));
+        $("lan-out").textContent = "Ping avg: "+avg.toFixed(1)+" ms ("+samples.map(x=>x.toFixed(1)).join(", ")+")";
+        await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kind:"ping", ping_ms:avg})});
+        refresh();
+      }catch(_){}
+    };
+
+    $("btn-down").onclick = async ()=>{
+      const size = parseInt($("size").value,10), streams = parseInt($("streams").value,10);
+      setBar("dl-bar",0); $("lan-out").textContent = "Download running…";
+      try{
+        const d = await runDownload(size, streams);
+        setText("dl-mbps", d.mbps.toFixed(2));
+        $("lan-out").textContent = "Download: "+d.mbps.toFixed(2)+" Mbps (bytes="+d.bytes.toLocaleString()+", time="+d.seconds.toFixed(2)+"s, streams="+streams+")";
+        await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kind:"lan_down", mbps:d.mbps, bytes:d.bytes, seconds:d.seconds})});
+        refresh();
+      }catch(_){}
+    };
+
+    $("btn-up").onclick = async ()=>{
+      const size = parseInt($("size").value,10), streams = parseInt($("streams").value,10);
+      setBar("ul-bar",0); $("lan-out").textContent = "Upload running…";
+      try{
+        const u = await runUpload(size, streams);
+        setText("ul-mbps", u.mbps.toFixed(2));
+        $("lan-out").textContent = "Upload: "+u.mbps.toFixed(2)+" Mbps (bytes="+u.bytes.toLocaleString()+", time="+u.seconds.toFixed(2)+"s, streams="+streams+")";
+        await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kind:"lan_up", mbps:u.mbps, bytes:u.bytes, seconds:u.seconds})});
+        refresh();
+      }catch(_){}
+    };
+
+    $("btn-both").onclick = async ()=>{
+      const size = parseInt($("size").value,10), streams = parseInt($("streams").value,10);
+      setBar("dl-bar",0); setBar("ul-bar",0); $("lan-out").textContent = "Running DL→UL…";
+      try{
+        const d = await runDownload(size, streams);
+        const u = await runUpload(size, streams);
+        setText("dl-mbps", d.mbps.toFixed(2));
+        setText("ul-mbps", u.mbps.toFixed(2));
+        $("lan-out").textContent = "DL: "+d.mbps.toFixed(2)+" Mbps, UL: "+u.mbps.toFixed(2)+" Mbps";
+        await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kind:"lan_down", mbps:d.mbps, bytes:d.bytes, seconds:d.seconds})});
+        await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kind:"lan_up",   mbps:u.mbps, bytes:u.bytes, seconds:u.seconds})});
+        refresh();
+      }catch(_){}
+    };
+
+    $("btn-all").onclick = async ()=>{
+      // Top-level "Run ALL": LAN both → ask server to run WAN and send 1 Telegram
+      const size = parseInt($("size").value,10), streams = parseInt($("streams").value,10);
+      setBar("dl-bar",0); setBar("ul-bar",0); $("lan-out").textContent = "Running DL→UL…";
+      try{
+        const d = await runDownload(size, streams);
+        const u = await runUpload(size, streams);
+        setText("dl-mbps", d.mbps.toFixed(2)); setText("ul-mbps", u.mbps.toFixed(2));
+        $("lan-out").textContent = "DL: "+d.mbps.toFixed(2)+" Mbps, UL: "+u.mbps.toFixed(2)+" Mbps";
+        await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kind:"lan_down", mbps:d.mbps, bytes:d.bytes, seconds:d.seconds})});
+        await safeFetch("/api/report",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kind:"lan_up",   mbps:u.mbps, bytes:u.bytes, seconds:u.seconds})});
+        // ask server to do WAN + Telegram (one consolidated message)
+        $("wan-out").textContent = "WAN starting…";
+        const res = await safeFetch("/api/run-all",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({lan_down:{mbps:d.mbps,bytes:d.bytes,seconds:d.seconds},
+                               lan_up:{mbps:u.mbps,bytes:u.bytes,seconds:u.seconds}})});
+        const j = await res.json();
+        if(j.ok){
+          $("wan-out").textContent = "WAN: ↓ "+Number(j.down_mbps||0).toFixed(2)+" Mbps, ↑ "+Number(j.up_mbps||0).toFixed(2)+" Mbps, ping "+Number(j.ping_ms||0).toFixed(1)+" ms\nServer: "+(j.server||"");
+          setText("wan-dl", Number(j.down_mbps||0).toFixed(2));
+          setText("wan-ul", Number(j.up_mbps||0).toFixed(2));
+          setText("wan-ping", Number(j.ping_ms||0).toFixed(1));
+        }else{
+          $("wan-out").textContent = "Run-all failed: "+(j.error||"unknown");
+        }
+        refresh();
+      }catch(_){}
+    };
+
+    $("btn-wan").onclick = async ()=>{ $("wan-out").textContent = "WAN starting…"; try{ await safeFetch("/api/run-wan",{method:"POST"});}catch(_){} };
+
+    // -------- SSE live updates (WAN stages + history push) --------
+    (function initSSE(){
+      try{
+        const es = new EventSource("/events");
+        const dot = $("sse-dot");
+        es.addEventListener("hello", ()=>{ dot.classList.add("ok"); });
+        es.onopen = ()=>{ dot.classList.add("ok"); };
+        es.onerror = ()=>{ dot.classList.remove("ok"); };
+        es.addEventListener("wan_progress", function(ev){
+          try{
+            const d = JSON.parse(ev.data||"{}");
+            const map = {
+              init:"initializing…",
+              finding_servers:"discovering servers…",
+              selecting_best:"selecting best server…",
+              download:"measuring download…",
+              upload:"measuring upload…"
+            };
+            $("wan-out").textContent = "WAN: " + (map[d.stage] || "running…");
+          }catch(_){}
+        });
+        es.addEventListener("wan_done", function(ev){
+          try{
+            const d = JSON.parse(ev.data||"{}");
+            $("wan-out").textContent = "WAN: ↓ "+Number(d.down_mbps||0).toFixed(2)+" Mbps, ↑ "+Number(d.up_mbps||0).toFixed(2)+" Mbps, ping "+Number(d.ping_ms||0).toFixed(1)+" ms\nServer: "+(d.server||"");
+            setText("wan-dl", Number(d.down_mbps||0).toFixed(2));
+            setText("wan-ul", Number(d.up_mbps||0).toFixed(2));
+            setText("wan-ping", Number(d.ping_ms||0).toFixed(1));
+            refresh();
+          }catch(_){}
+        });
+        es.addEventListener("wan_error", function(ev){
+          try{ const d = JSON.parse(ev.data||"{}"); $("wan-out").textContent = "WAN error: " + (d.error||"unknown"); }
+          catch(_){ $("wan-out").textContent = "WAN error."; }
+        });
+        es.addEventListener("history_updated", ()=>{ refresh(); });
+      }catch(e){ logErr("SSE not available: "+e.message); }
+    })();
+
+    // fallback: refresh every 30s (if cron overlaps)
+    setInterval(()=>{ refresh(); }, 30000);
+    refresh();
+  });
+  </script>
+</body>
+</html>

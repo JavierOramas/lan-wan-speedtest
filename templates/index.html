@@ -17,6 +17,7 @@
     :root{
       --bg: #0b1020; --card:#131a2a; --card2:#10182a; --text:#e8eef9; --muted:#a6b1c6;
       --accent:#4c8bf5; --accent2:#7c4cf5; --line:#263047; --ok:#19c37d; --err:#ff5252;
+      --warning:#ffa726; --info:#29b6f6;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -35,24 +36,27 @@
     .brand h1{margin:0; font-size:20px; letter-spacing:.2px}
     .actions{display:flex; gap:8px; flex-wrap:wrap}
     button,.chip,select{background:var(--card); color:var(--text); border:1px solid var(--line);
-      border-radius:10px; padding:.6rem .9rem; cursor:pointer}
-    button:hover{border-color:#3b4a6e}
+      border-radius:10px; padding:.6rem .9rem; cursor:pointer; transition: all 0.2s ease}
+    button:hover{border-color:#3b4a6e; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2)}
+    button:active{transform: translateY(0)}
+    button:disabled{opacity:0.6; cursor:not-allowed; transform: none}
     .chip{font-size:.86rem}
     .grid{display:grid; gap:16px; grid-template-columns: 1fr; }
     @media(min-width:960px){ .grid{ grid-template-columns: 1fr 1fr; } }
     .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-      border:1px solid var(--line); border-radius:16px; padding:16px; backdrop-filter: blur(6px);}
+      border:1px solid var(--line); border-radius:16px; padding:16px; backdrop-filter: blur(6px);
+      transition: all 0.3s ease}
+    .card:hover{border-color:var(--accent); box-shadow: 0 8px 32px rgba(76,139,245,0.1)}
     h2{margin:.2rem 0 1rem; font-size:1.1rem; color:#f3f6ff}
     .muted{color:var(--muted)}
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     .metric{display:inline-flex; gap:8px; align-items:center; background:var(--card); border:1px solid var(--line);
-      border-radius:999px; padding:.25rem .6rem; font-size:.9rem}
+      border-radius:999px; padding:.25rem .6rem; font-size:.9rem; transition: all 0.2s ease}
+    .metric:hover{border-color:var(--accent)}
     .bar{height:10px; background:#0f1630; border:1px solid var(--line); border-radius:999px; overflow:hidden}
-    .fill{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .2s}
-    .out{white-space:pre-wrap; background:var(--card2); border:1px dashed var(--line); border-radius:12px; padding:.75rem; margin-top:.75rem; color:#dfe6ff}
-    .charts{display:grid; gap:16px; grid-template-columns:1fr; }
-    @media(min-width:1100px){ .charts{grid-template-columns:1fr 1fr} }
-    canvas{width:100%; height:340px; background: #0a1229; border:1px solid var(--line); border-radius:12px; padding:8px}
+    .fill{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s ease}
+    .out{white-space:pre-wrap; background:var(--card2); border:1px dashed var(--line); border-radius:12px; padding:.75rem; margin-top:.75rem; color:#dfe6ff; min-height: 60px}
+    canvas{width:100%; height:200px; background: #0a1229; border:1px solid var(--line); border-radius:12px; padding:8px}
     table{width:100%; border-collapse: collapse; font-size:.95rem;}
     th,td{border-bottom:1px solid var(--line); padding:8px 10px; text-align:left}
     th{color:#cdd6ef; background:#0f1731}
@@ -60,7 +64,128 @@
     .badge{display:inline-flex; align-items:center; gap:6px; padding:.25rem .6rem; border:1px solid var(--line);
       border-radius:999px; background:var(--card); font-size:.85rem}
     .dot{width:8px;height:8px;border-radius:999px;background:#8fa3d9}
-    .dot.ok{background:var(--ok)} .dot.err{background:var(--err)}
+    .dot.ok{background:var(--ok)} .dot.err{background:var(--err)} .dot.warning{background:var(--warning)}
+    
+    /* New styles for enhanced UI */
+    .progress-container{background:var(--card2); border-radius:12px; padding:12px; margin:8px 0}
+    .progress-bar{height:8px; background:#0f1630; border-radius:999px; overflow:hidden; margin:8px 0}
+    .progress-fill{height:100%; width:0%; background:linear-gradient(90deg, var(--ok), var(--info)); transition: width .3s ease}
+    .status-indicator{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; font-size:0.9rem}
+    .status-running{background:rgba(41,182,246,0.1); border:1px solid var(--info); color:var(--info)}
+    .status-complete{background:rgba(25,195,125,0.1); border:1px solid var(--ok); color:var(--ok)}
+    .status-error{background:rgba(255,82,82,0.1); border:1px solid var(--err); color:var(--err)}
+    .speed-display{font-size:1.2rem; font-weight:bold; color:var(--accent)}
+    .server-info{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:8px; margin:8px 0; font-size:0.9rem}
+    .live-indicator{animation: pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+          .test-history{max-height:200px; overflow-y:auto; background:var(--card2); border-radius:8px; padding:8px; margin-top:8px}
+      .history-item{display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--line); font-size:0.85rem}
+      .history-item:last-child{border-bottom:none}
+      
+      /* Form styles for scheduling */
+      .form-group{margin-bottom:20px}
+      .form-group label{display:block; margin-bottom:8px; font-weight:500; color:var(--text)}
+      .form-group input, .form-group select{width:100%; padding:8px 12px; background:var(--card2); border:1px solid var(--line); border-radius:8px; color:var(--text)}
+      .form-group input:focus, .form-group select:focus{outline:none; border-color:var(--accent)}
+      .form-group small{display:block; margin-top:4px; color:var(--muted); font-size:0.85rem}
+      .form-actions{display:flex; gap:12px; margin-top:20px}
+      .form-actions button{flex:1}
+      .info-box{background:var(--card2); padding:15px; border-radius:8px; margin-bottom:20px; border-left:4px solid var(--info)}
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: var(--card);
+      margin: 5% auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+      padding: 20px 20px 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    
+    .modal-header h3 {
+      margin: 0 0 15px 0;
+      color: var(--text);
+    }
+    
+    .close {
+      color: var(--muted);
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1;
+    }
+    
+    .close:hover {
+      color: var(--text);
+    }
+    
+    .modal-body {
+      padding: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-weight: 500;
+    }
+    
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--card2);
+      color: var(--text);
+      font-size: 14px;
+    }
+    
+    .form-group small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 25px;
+    }
+    
+    .btn-secondary {
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--line);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -74,16 +199,16 @@
           <div class="muted" style="font-size:.9rem">Live LAN & WAN • History • Charts • Telegram Alerts</div>
         </div>
       </div>
-      <div class="actions">
-        <button id="btn-all">▶ Run ALL (LAN DL→UL → WAN & Telegram)</button>
-        <span class="badge"><span class="dot" id="sse-dot"></span> Live</span>
-        <span class="badge">Schedule: {{ 'on' if schedule_on else 'off' }}{% if schedule_on %} ({{ cron }}){% endif %}</span>
-      </div>
+              <div class="actions">
+          <button id="btn-all">▶ Run ALL (LAN DL→UL → WAN & Telegram)</button>
+          <span class="badge"><span class="dot" id="sse-dot"></span> Live</span>
+          <span class="badge" id="scheduleBadge">Schedule: Loading...</span>
+        </div>
     </header>
 
     <div id="log"></div>
 
-    <div class="grid">
+        <div class="grid">
       <section class="card">
         <h2>LAN (Browser ⇄ Container)</h2>
         <div class="row" style="margin-bottom:8px">
@@ -123,34 +248,120 @@
         </div>
 
         <div class="out" id="lan-out">Ready.</div>
+        
+        <!-- LAN Chart below the testing forms -->
+        <div style="margin-top:16px">
+          <div class="muted" style="margin-bottom:6px">LAN Mbps (down/up)</div>
+          <canvas id="lanChart" style="height:200px"></canvas>
+        </div>
       </section>
 
       <section class="card">
         <h2>WAN (Container ⇄ Internet)</h2>
         <div class="row" style="margin-bottom:8px">
           <button id="btn-wan">Run WAN speed test</button>
+          <button id="btn-wan-status">Status</button>
         </div>
+        
+        <!-- Enhanced WAN Progress Display -->
+        <div id="wan-progress" style="display:none">
+          <div class="progress-container">
+            <div class="status-indicator status-running">
+              <span class="live-indicator">●</span>
+              <span id="wan-stage">Initializing...</span>
+            </div>
+            <div class="progress-bar">
+              <div id="wan-progress-bar" class="progress-fill"></div>
+            </div>
+            <div id="wan-test-details" class="muted" style="margin-top:8px; font-size:0.9rem; text-align:center;">
+              Test in progress...
+            </div>
+          </div>
+        </div>
+
+        <!-- Unified WAN Speed Display -->
         <div class="row" style="margin:6px 0 10px">
           <span class="metric">WAN ↓ <strong id="wan-dl">–</strong> Mbps</span>
           <span class="metric">WAN ↑ <strong id="wan-ul">–</strong> Mbps</span>
           <span class="metric">ping <strong id="wan-ping">–</strong> ms</span>
         </div>
+        
         <div class="out" id="wan-out">Idle.</div>
+        
+        <!-- Server Information -->
+        <div id="wan-server-info" class="server-info" style="display:none">
+          <strong>Server:</strong> <span id="wan-server-name">–</span>
+        </div>
+        
+        <!-- Test History -->
+        <div id="wan-history" class="test-history" style="display:none">
+          <div class="muted" style="margin-bottom:8px">Recent Tests:</div>
+          <div id="wan-history-list"></div>
+        </div>
+        
+        <!-- WAN Chart below the testing forms -->
+        <div style="margin-top:16px">
+          <div class="muted" style="margin-bottom:6px">WAN Mbps (down/up)</div>
+          <canvas id="wanChart" style="height:200px"></canvas>
+        </div>
       </section>
     </div>
 
-    <section class="card">
-      <h2>Charts</h2>
-      <div class="charts">
-        <div>
-          <div class="muted" style="margin-bottom:6px">WAN Mbps (down/up)</div>
-          <canvas id="wanChart"></canvas>
+    <!-- Schedule Management Section -->
+    <section class="card" style="margin-bottom: 20px;">
+      <h2>🕐 Automated WAN Testing Schedule</h2>
+      
+      <div id="scheduleStatus" style="margin-bottom: 20px;">
+        <div class="status-indicator">
+          <span id="scheduleStatusText">Loading...</span>
         </div>
-        <div>
-          <div class="muted" style="margin-bottom:6px">LAN Mbps (down/up)</div>
-          <canvas id="lanChart"></canvas>
+        <div id="scheduleDetails" class="muted" style="margin-top: 8px; font-size: 0.9rem;"></div>
+      </div>
+      
+      <div class="info-box" style="background: var(--card2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--info);">
+        <div style="font-weight: 500; margin-bottom: 8px; color: var(--info);">ℹ️ Python-Based Scheduling</div>
+        <div style="font-size: 0.9rem; color: var(--muted);">
+          Automated WAN speed tests are now handled by Python code instead of system cron jobs. 
+          Select your desired frequency below and the app will automatically run tests at the specified intervals.
         </div>
       </div>
+      
+              <div class="form-group">
+          <label for="scheduleEnabled">
+            <input type="checkbox" id="scheduleEnabled" style="margin-right: 8px;">
+            Enable Automated Testing
+          </label>
+        </div>
+        
+        <div id="scheduleForm" style="display: none;">
+          <div class="form-group">
+            <label for="scheduleInterval">Test Frequency (minutes):</label>
+            <select id="scheduleInterval">
+              <option value="5">Every 5 Minutes</option>
+              <option value="10">Every 10 Minutes</option>
+              <option value="15" selected>Every 15 Minutes</option>
+              <option value="30">Every 30 Minutes</option>
+              <option value="60">Every Hour</option>
+              <option value="120">Every 2 Hours</option>
+              <option value="240">Every 4 Hours</option>
+              <option value="480">Every 8 Hours</option>
+              <option value="1440">Daily</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          
+          <div id="customIntervalGroup" class="form-group" style="display: none;">
+            <label for="customInterval">Custom Interval (minutes):</label>
+            <input type="number" id="customInterval" placeholder="15" min="1" max="1440" 
+                   title="Enter number of minutes between tests (1-1440)">
+            <small>Enter minutes between tests (e.g., 15 for every 15 minutes)</small>
+          </div>
+          
+          <div class="form-actions">
+            <button id="btnUpdateSchedule" class="btn btn-primary">Update Schedule</button>
+            <button id="btnDisableSchedule" class="btn btn-danger">Disable Automation</button>
+          </div>
+        </div>
     </section>
 
     <section class="card">
@@ -161,14 +372,21 @@
       </div>
       <div id="hist"></div>
     </section>
+
   </div>
 
   <script>
   document.addEventListener("DOMContentLoaded", function(){
+    console.log("DOM Content Loaded - Setting up functions...");
+    
     function $(id){ return document.getElementById(id); }
     function setBar(id, pct){ $(id).style.width = Math.max(0, Math.min(100, pct)) + "%"; }
     function setText(id, txt){ $(id).textContent = txt; }
     function logErr(msg){ $("log").textContent = msg; }
+
+    // WAN test state
+    let wanTestRunning = false;
+    let wanProgress = 0;
 
     // Robust fetch with retry (helps if cron run momentarily saturates the host)
     async function safeFetch(url, opts, retries=2){
@@ -181,6 +399,93 @@
           if(i===retries){ logErr("Fetch error for "+url+": "+e.message); throw e; }
           await new Promise(r=>setTimeout(r, 800*(i+1)));
         }
+      }
+    }
+
+    // -------- Enhanced WAN Progress Tracking --------
+    function showWanProgress(show = true) {
+      $("wan-progress").style.display = show ? "block" : "none";
+      if (show) {
+        wanTestRunning = true;
+        $("btn-wan").disabled = true;
+        $("btn-wan").textContent = "Test Running...";
+      } else {
+        wanTestRunning = false;
+        $("btn-wan").disabled = false;
+        $("btn-wan").textContent = "Run WAN speed test";
+      }
+    }
+
+    function updateWanProgress(stage, message, data = {}) {
+      if (!wanTestRunning) return;
+      
+      $("wan-stage").textContent = message;
+      
+      // Update progress bar based on stage or use provided progress
+      if (data.progress !== undefined) {
+        wanProgress = data.progress;
+        setBar("wan-progress-bar", wanProgress);
+      } else {
+        const stageProgress = {
+          'init': 5,
+          'finding_servers': 15,
+          'selecting_best': 25,
+          'server_selected': 30,
+          'download': 50,
+          'download_complete': 75,
+          'upload': 75,
+          'upload_complete': 95,
+          'processing': 98
+        };
+        
+        if (stageProgress[stage] !== undefined) {
+          wanProgress = stageProgress[stage];
+          setBar("wan-progress-bar", wanProgress);
+        }
+      }
+      
+      // Update live speed displays during active tests
+      if (data.current_speed !== undefined) {
+        if (stage === 'download') {
+          setText("wan-dl", data.current_speed.toFixed(2));
+        } else if (stage === 'upload') {
+          setText("wan-ul", data.current_speed.toFixed(2));
+        }
+      }
+      
+      // Update final speed displays
+      if (data.speed !== undefined) {
+        if (stage === 'download_complete') {
+          setText("wan-dl", data.speed.toFixed(2));
+        } else if (stage === 'upload_complete') {
+          setText("wan-ul", data.speed.toFixed(2));
+        }
+      }
+      
+      // Update server info
+      if (data.server) {
+        $("wan-server-info").style.display = "block";
+        $("wan-server-name").textContent = data.server;
+      }
+      
+      // Update ping if available
+      if (data.ping_ms !== undefined) {
+        setText("wan-ping", data.ping_ms.toFixed(1));
+      }
+      
+      // Update test details
+      if (data.bytes_downloaded !== undefined) {
+        const mb = (data.bytes_downloaded / 1e6).toFixed(2);
+        $("wan-test-details").textContent = `Downloaded: ${mb} MB`;
+      } else if (data.bytes_uploaded !== undefined) {
+        const mb = (data.bytes_uploaded / 1e6).toFixed(2);
+        $("wan-test-details").textContent = `Uploaded: ${mb} MB`;
+      } else if (stage === 'download') {
+        $("wan-test-details").textContent = "Measuring download speed...";
+      } else if (stage === 'upload') {
+        $("wan-test-details").textContent = "Measuring upload speed...";
+      } else if (stage === 'processing') {
+        $("wan-test-details").textContent = "Finalizing results...";
       }
     }
 
@@ -235,13 +540,109 @@
       return performance.now() - t0;
     }
 
+    // -------- WAN Status and History --------
+    async function loadWanStatus() {
+      try {
+        const res = await safeFetch("/api/wan-status");
+        const data = await res.json();
+        if (data.ok && data.recent_tests.length > 0) {
+          displayWanHistory(data.recent_tests, data.averages);
+        }
+      } catch (e) {
+        console.log("Failed to load WAN status:", e);
+      }
+    }
+
+    function displayWanHistory(tests, averages = {}) {
+      const container = $("wan-history-list");
+      const history = $("wan-history");
+      
+      if (tests.length === 0) {
+        history.style.display = "none";
+        return;
+      }
+      
+      history.style.display = "block";
+      
+      // Add averages header
+      let headerHtml = '<div class="history-header" style="margin-bottom:12px; padding:8px; background:var(--card); border-radius:6px; font-size:0.85rem;">';
+      headerHtml += '<div style="margin-bottom:6px; font-weight:bold; color:var(--accent);">3-Day Averages:</div>';
+      headerHtml += `<span style="margin-right:12px;">↓ ${averages.down?.toFixed(2) || 'N/A'} Mbps</span>`;
+      headerHtml += `<span style="margin-right:12px;">↑ ${averages.up?.toFixed(2) || 'N/A'} Mbps</span>`;
+      headerHtml += `<span>ping ${averages.ping?.toFixed(1) || 'N/A'} ms</span>`;
+      headerHtml += '</div>';
+      
+      container.innerHTML = headerHtml + tests.map(test => {
+        const down = test.wan_down?.mbps || 0;
+        const up = test.wan_up?.mbps || 0;
+        const ping = test.wan_ping?.ping_ms || 0;
+        const time = new Date(test.ts_utc).toLocaleTimeString();
+        
+        // Format percentage changes with arrows and colors
+        const formatChange = (change, isPing = false) => {
+          if (change === undefined || change === null) return '';
+          
+          const arrow = change > 0 ? '↗️' : change < 0 ? '↘️' : '➡️';
+          const color = change > 0 ? (isPing ? '#ff5252' : '#19c37d') : change < 0 ? (isPing ? '#19c37d' : '#ff5252') : 'var(--muted)';
+          const sign = change > 0 ? '+' : '';
+          
+          return `<span style="color:${color}; font-size:0.8rem; margin-left:4px;">${arrow} ${sign}${change.toFixed(1)}%</span>`;
+        };
+        
+        return `
+          <div class="history-item">
+            <span style="font-weight:500;">${time}</span>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <span>↓${down.toFixed(2)} Mbps${formatChange(test.wan_down?.change_pct)}</span>
+              <span>↑${up.toFixed(2)} Mbps${formatChange(test.wan_up?.change_pct)}</span>
+              <span>${ping.toFixed(1)}ms${formatChange(test.wan_ping?.change_pct, true)}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
     // -------- Charts & history --------
     let wanChart, lanChart;
     function renderTable(rows){
       if(!rows || !rows.length) return "<p class='muted'>No results yet.</p>";
-      let h = "<table><thead><tr><th>Time (UTC)</th><th>Kind</th><th>Mbps</th><th>Ping</th><th>Server</th></tr></thead><tbody>";
+      
+      // Calculate averages for comparison
+      const wanDownTests = rows.filter(r => r.kind === 'wan_down' && r.mbps).map(r => r.mbps);
+      const wanUpTests = rows.filter(r => r.kind === 'wan_up' && r.mbps).map(r => r.mbps);
+      const lanDownTests = rows.filter(r => r.kind === 'lan_down' && r.mbps).map(r => r.mbps);
+      const lanUpTests = rows.filter(r => r.kind === 'lan_up' && r.mbps).map(r => r.mbps);
+      
+      const avgWanDown = wanDownTests.length > 0 ? wanDownTests.reduce((a, b) => a + b, 0) / wanDownTests.length : null;
+      const avgWanUp = wanUpTests.length > 0 ? wanUpTests.reduce((a, b) => a + b, 0) / wanUpTests.length : null;
+      const avgLanDown = lanDownTests.length > 0 ? lanDownTests.reduce((a, b) => a + b, 0) / lanDownTests.length : null;
+      const avgLanUp = lanUpTests.length > 0 ? lanUpTests.reduce((a, b) => a + b, 0) / lanUpTests.length : null;
+      
+      let h = "<table><thead><tr><th>Time (UTC)</th><th>Kind</th><th>Mbps</th><th>Ping</th><th>Server</th><th>Change</th></tr></thead><tbody>";
+      
       for(const r of rows){
-        h += "<tr><td>"+r.ts_utc+"</td><td>"+r.kind+"</td><td>"+(r.mbps==null?"":Number(r.mbps).toFixed(2))+"</td><td>"+(r.ping_ms==null?"":Number(r.ping_ms).toFixed(1)+" ms")+"</td><td>"+(r.server||"")+"</td></tr>";
+        const mbps = r.mbps != null ? Number(r.mbps).toFixed(2) : "";
+        const ping = r.ping_ms != null ? Number(r.ping_ms).toFixed(1) + " ms" : "";
+        
+        // Calculate percentage change
+        let changeHtml = "";
+        if (r.mbps != null) {
+          let avg = null;
+          if (r.kind === 'wan_down') avg = avgWanDown;
+          else if (r.kind === 'wan_up') avg = avgWanUp;
+          else if (r.kind === 'lan_down') avg = avgLanDown;
+          else if (r.kind === 'lan_up') avg = avgLanUp;
+          
+          if (avg && avg > 0) {
+            const change = ((r.mbps - avg) / avg) * 100;
+            const arrow = change > 0 ? '↗️' : change < 0 ? '↘️' : '➡️';
+            const color = change > 0 ? '#19c37d' : change < 0 ? '#ff5252' : 'var(--muted)';
+            const sign = change > 0 ? '+' : '';
+            changeHtml = `<span style="color:${color}; font-size:0.85rem;">${arrow} ${sign}${change.toFixed(1)}%</span>`;
+          }
+        }
+        
+        h += `<tr><td>${r.ts_utc}</td><td>${r.kind}</td><td>${mbps}</td><td>${ping}</td><td>${r.server||""}</td><td>${changeHtml}</td></tr>`;
       }
       h += "</tbody></table>";
       return h;
@@ -252,32 +653,155 @@
       const wanUp   = rows.filter(r=>r.kind==="wan_up");
       const lanDown = rows.filter(r=>r.kind==="lan_down");
       const lanUp   = rows.filter(r=>r.kind==="lan_up");
-      const wanLabels = wanDown.map(r=>r.ts_utc);
-      const lanLabels = Array.from(new Set(lanDown.map(r=>r.ts_utc).concat(lanUp.map(r=>r.ts_utc)))).sort();
+      
+      // Create continuous time series with all timestamps
+      const allTimestamps = Array.from(new Set([
+        ...wanDown.map(r=>r.ts_utc),
+        ...wanUp.map(r=>r.ts_utc),
+        ...lanDown.map(r=>r.ts_utc),
+        ...lanUp.map(r=>r.ts_utc)
+      ])).sort();
+      
+      // Create continuous data series (fill gaps with null for smooth lines)
+      const createContinuousSeries = (data, timestamps) => {
+        const dataMap = Object.fromEntries(data.map(r=>[r.ts_utc, r.mbps]));
+        return timestamps.map(t => dataMap[t] || null);
+      };
 
       if(wanChart) wanChart.destroy();
       if(lanChart) lanChart.destroy();
 
       wanChart = new Chart(document.getElementById("wanChart").getContext("2d"), {
         type:'line',
-        data:{labels:wanLabels, datasets:[
-          {label:'WAN Download (Mbps)', data:wanDown.map(r=>r.mbps), fill:false, tension:.25},
-          {label:'WAN Upload (Mbps)',   data:wanUp.map(r=>r.mbps),   fill:false, tension:.25},
-        ]},
-        options:{responsive:true, scales:{y:{beginAtZero:true, title:{display:true,text:'Mbps'}}}}
+        data:{
+          labels: allTimestamps.map(t => new Date(t).toLocaleTimeString()),
+          datasets:[
+            {
+              label:'WAN Download (Mbps)', 
+              data: createContinuousSeries(wanDown, allTimestamps), 
+              fill: false, 
+              tension: 0.4, 
+              borderColor: '#4c8bf5',
+              borderWidth: 2,
+              pointRadius: 0, // No data points
+              pointHoverRadius: 0, // No hover points
+              spanGaps: true // Connect across null values
+            },
+            {
+              label:'WAN Upload (Mbps)',   
+              data: createContinuousSeries(wanUp, allTimestamps),   
+              fill: false, 
+              tension: 0.4, 
+              borderColor: '#7c4cf5',
+              borderWidth: 2,
+              pointRadius: 0, // No data points
+              pointHoverRadius: 0, // No hover points
+              spanGaps: true // Connect across null values
+            },
+          ]
+        },
+        options:{
+          responsive: true,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              enabled: true,
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales:{
+            x: {
+              display: true,
+              title: { display: false },
+              grid: { display: false }
+            },
+            y:{
+              beginAtZero: true, 
+              title: { display: true, text: 'Mbps' },
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
+            }
+          }
+        }
       });
 
-      const dMap = Object.fromEntries(lanDown.map(r=>[r.ts_utc,r.mbps]));
-      const uMap = Object.fromEntries(lanUp.map(r=>[r.ts_utc,r.mbps]));
-      const dSeries = lanLabels.map(t=> (t in dMap)?dMap[t]:null);
-      const uSeries = lanLabels.map(t=> (t in uMap)?uMap[t]:null);
       lanChart = new Chart(document.getElementById("lanChart").getContext("2d"), {
         type:'line',
-        data:{labels:lanLabels, datasets:[
-          {label:'LAN Download (Mbps)', data:dSeries, fill:false, tension:.25},
-          {label:'LAN Upload (Mbps)',   data:uSeries,   fill:false, tension:.25},
-        ]},
-        options:{responsive:true, scales:{y:{beginAtZero:true, title:{display:true,text:'Mbps'}}}}
+        data:{
+          labels: allTimestamps.map(t => new Date(t).toLocaleTimeString()),
+          datasets:[
+            {
+              label:'LAN Download (Mbps)', 
+              data: createContinuousSeries(lanDown, allTimestamps), 
+              fill: false, 
+              tension: 0.4, 
+              borderColor: '#19c37d',
+              borderWidth: 2,
+              pointRadius: 0, // No data points
+              pointHoverRadius: 0, // No hover points
+              spanGaps: true // Connect across null values
+            },
+            {
+              label:'LAN Upload (Mbps)',   
+              data: createContinuousSeries(lanUp, allTimestamps),   
+              fill: false, 
+              tension: 0.4, 
+              borderColor: '#ffa726',
+              borderWidth: 2,
+              pointRadius: 0, // No data points
+              pointHoverRadius: 0, // No hover points
+              spanGaps: true // Connect across null values
+            },
+          ]
+        },
+        options:{
+          responsive: true,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              enabled: true,
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales:{
+            x: {
+              display: true,
+              title: { display: false },
+              grid: { display: false }
+            },
+            y:{
+              beginAtZero: true, 
+              title: { display: true, text: 'Mbps' },
+              gap: true,
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
+            }
+          }
+        }
       });
     }
     async function refresh(){
@@ -366,9 +890,22 @@
       }catch(_){}
     };
 
-    $("btn-wan").onclick = async ()=>{ $("wan-out").textContent = "WAN starting…"; try{ await safeFetch("/api/run-wan",{method:"POST"});}catch(_){} };
+    $("btn-wan").onclick = async ()=>{ 
+      showWanProgress(true);
+      setBar("wan-progress-bar", 0);
+      $("wan-out").textContent = "WAN starting…"; 
+      try{ 
+        await safeFetch("/api/run-wan",{method:"POST"});
+      }catch(_){
+        showWanProgress(false);
+      } 
+    };
 
-    // -------- SSE live updates (WAN stages + history push) --------
+    $("btn-wan-status").onclick = async ()=>{
+      await loadWanStatus();
+    };
+
+    // -------- Enhanced SSE live updates --------
     (function initSSE(){
       try{
         const es = new EventSource("/events");
@@ -376,33 +913,59 @@
         es.addEventListener("hello", ()=>{ dot.classList.add("ok"); });
         es.onopen = ()=>{ dot.classList.add("ok"); };
         es.onerror = ()=>{ dot.classList.remove("ok"); };
+        
         es.addEventListener("wan_progress", function(ev){
           try{
             const d = JSON.parse(ev.data||"{}");
-            const map = {
-              init:"initializing…",
-              finding_servers:"discovering servers…",
-              selecting_best:"selecting best server…",
-              download:"measuring download…",
-              upload:"measuring upload…"
-            };
-            $("wan-out").textContent = "WAN: " + (map[d.stage] || "running…");
+            updateWanProgress(d.stage, d.message, d);
+            
+            // Update output with detailed progress
+            if (d.stage === 'server_selected') {
+              $("wan-out").textContent = `Server: ${d.server}`;
+            } else if (d.stage === 'download_complete' && d.speed) {
+              $("wan-out").textContent = `Download: ${d.speed.toFixed(2)} Mbps`;
+            } else if (d.stage === 'upload_complete' && d.speed) {
+              $("wan-out").textContent = `Upload: ${d.speed.toFixed(2)} Mbps`;
+            } else if (d.stage === 'processing') {
+              $("wan-out").textContent = `Processing results... ↓${d.down_mbps?.toFixed(2) || '0'} ↑${d.up_mbps?.toFixed(2) || '0'} Mbps, ping ${d.ping_ms?.toFixed(1) || '0'}ms`;
+            }
           }catch(_){}
         });
+        
         es.addEventListener("wan_done", function(ev){
           try{
             const d = JSON.parse(ev.data||"{}");
-            $("wan-out").textContent = "WAN: ↓ "+Number(d.down_mbps||0).toFixed(2)+" Mbps, ↑ "+Number(d.up_mbps||0).toFixed(2)+" Mbps, ping "+Number(d.ping_ms||0).toFixed(1)+" ms\nServer: "+(d.server||"");
+            showWanProgress(false);
+            setBar("wan-progress-bar", 100);
+            
+            $("wan-out").textContent = d.message || `WAN: ↓ ${Number(d.down_mbps||0).toFixed(2)} Mbps, ↑ ${Number(d.up_mbps||0).toFixed(2)} Mbps, ping ${Number(d.ping_ms||0).toFixed(1)} ms`;
             setText("wan-dl", Number(d.down_mbps||0).toFixed(2));
             setText("wan-ul", Number(d.up_mbps||0).toFixed(2));
             setText("wan-ping", Number(d.ping_ms||0).toFixed(1));
+            
+            // Update server info
+            if (d.server) {
+              $("wan-server-info").style.display = "block";
+              $("wan-server-name").textContent = d.server;
+            }
+            
             refresh();
+            loadWanStatus(); // Refresh WAN history
           }catch(_){}
         });
+        
         es.addEventListener("wan_error", function(ev){
-          try{ const d = JSON.parse(ev.data||"{}"); $("wan-out").textContent = "WAN error: " + (d.error||"unknown"); }
-          catch(_){ $("wan-out").textContent = "WAN error."; }
+          try{ 
+            const d = JSON.parse(ev.data||"{}"); 
+            showWanProgress(false);
+            $("wan-out").textContent = d.message || "WAN error: " + (d.error||"unknown"); 
+          }
+          catch(_){ 
+            showWanProgress(false);
+            $("wan-out").textContent = "WAN error."; 
+          } 
         });
+        
         es.addEventListener("history_updated", ()=>{ refresh(); });
       }catch(e){ logErr("SSE not available: "+e.message); }
     })();
@@ -410,6 +973,174 @@
     // fallback: refresh every 30s
     setInterval(()=>{ refresh(); }, 30000);
     refresh();
+    loadWanStatus(); // Load initial WAN status
+    loadScheduleStatus(); // Load initial schedule status
+
+        // -------- Schedule Management Functions --------
+    async function loadScheduleStatus() {
+      try {
+        const response = await safeFetch("/api/schedule/status");
+        const data = await response.json();
+        
+        if (data.ok) {
+          // Update status text
+          $("scheduleStatusText").textContent = data.status;
+          
+          // Update schedule details
+          let details = `Interval: ${data.interval_minutes} minutes`;
+          if (data.last_run) {
+            const lastRun = new Date(data.last_run).toLocaleString();
+            details += ` | Last run: ${lastRun}`;
+          }
+          if (data.next_run) {
+            const nextRun = new Date(data.next_run).toLocaleString();
+            details += ` | Next run: ${nextRun}`;
+          }
+          $("scheduleDetails").textContent = details;
+          
+          // Update header badge
+          $("scheduleBadge").textContent = `Schedule: ${data.enabled ? 'on' : 'off'} (${data.interval_minutes}m)`;
+          
+          // Update form state
+          $("scheduleEnabled").checked = data.enabled;
+          updateScheduleForm();
+          
+          // Set interval dropdown
+          const interval = $("scheduleInterval");
+          if (interval) {
+            interval.value = data.interval_minutes.toString();
+            updateCustomInterval();
+          }
+        } else {
+          $("scheduleStatusText").textContent = `❌ Error: ${data.error}`;
+        }
+      } catch (error) {
+        $("scheduleStatusText").textContent = `❌ Error: ${error.message}`;
+      }
+    }
+
+    function updateScheduleForm() {
+      const enabled = $("scheduleEnabled").checked;
+      $("scheduleForm").style.display = enabled ? "block" : "none";
+    }
+
+    function updateCustomInterval() {
+      const interval = $("scheduleInterval").value;
+      $("customIntervalGroup").style.display = interval === "custom" ? "block" : "none";
+    }
+
+    async function updateSchedule() {
+      console.log("updateSchedule function called!");
+      alert("Update Schedule button clicked!");
+      
+      try {
+        console.log("Getting form values...");
+        const enabled = $("scheduleEnabled").checked;
+        let intervalMinutes = parseInt($("scheduleInterval").value);
+        
+        console.log("Form values:", { enabled, intervalMinutes });
+        
+        if ($("scheduleInterval").value === "custom") {
+          intervalMinutes = parseInt($("customInterval").value);
+          console.log("Custom interval:", intervalMinutes);
+        }
+        
+        if (isNaN(intervalMinutes) || intervalMinutes < 1 || intervalMinutes > 1440) {
+          alert("Please enter a valid interval between 1 and 1440 minutes");
+          return;
+        }
+        
+        console.log("Making API call...");
+        const response = await safeFetch("/api/schedule/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            enabled: enabled,
+            interval_minutes: intervalMinutes
+          })
+        });
+        
+        console.log("API response received");
+        const data = await response.json();
+        console.log("API data:", data);
+        
+        if (data.ok) {
+          alert(`✅ Schedule updated successfully!\n\nWAN speed tests will now run every ${intervalMinutes} minutes`);
+          await loadScheduleStatus();
+        } else {
+          alert(`❌ Error updating schedule: ${data.error}`);
+        }
+      } catch (error) {
+        console.error("Error in updateSchedule:", error);
+        alert(`❌ Error updating schedule: ${error.message}`);
+      }
+    }
+
+    async function disableSchedule() {
+      if (!confirm("Are you sure you want to disable automated WAN speed tests?")) {
+        return;
+      }
+      
+      try {
+        const response = await safeFetch("/api/schedule/disable", {
+          method: "POST"
+        });
+        
+        const data = await response.json();
+        if (data.ok) {
+          alert("✅ Automated testing disabled successfully!");
+          await loadScheduleStatus();
+        } else {
+          alert(`❌ Error disabling schedule: ${data.error}`);
+        }
+      } catch (error) {
+        alert(`❌ Error disabling schedule: ${error.message}`);
+      }
+    }
+
+    // Add event listeners for schedule management
+    console.log("Adding event listeners for schedule management...");
+    
+    // Wait a bit to ensure all elements are loaded
+    setTimeout(() => {
+      try {
+        const scheduleEnabled = document.getElementById("scheduleEnabled");
+        const scheduleInterval = document.getElementById("scheduleInterval");
+        const btnUpdateSchedule = document.getElementById("btnUpdateSchedule");
+        const btnDisableSchedule = document.getElementById("btnDisableSchedule");
+        
+        console.log("Elements found:", {
+          scheduleEnabled: !!scheduleEnabled,
+          scheduleInterval: !!scheduleInterval,
+          btnUpdateSchedule: !!btnUpdateSchedule,
+          btnDisableSchedule: !!btnDisableSchedule
+        });
+        
+        if (scheduleEnabled) {
+          scheduleEnabled.addEventListener("change", updateScheduleForm);
+          console.log("✅ scheduleEnabled event listener added");
+        }
+        
+        if (scheduleInterval) {
+          scheduleInterval.addEventListener("change", updateCustomInterval);
+          console.log("✅ scheduleInterval event listener added");
+        }
+        
+        if (btnUpdateSchedule) {
+          btnUpdateSchedule.addEventListener("click", updateSchedule);
+          console.log("✅ btnUpdateSchedule event listener added");
+        }
+        
+        if (btnDisableSchedule) {
+          btnDisableSchedule.addEventListener("click", disableSchedule);
+          console.log("✅ btnDisableSchedule event listener added");
+        }
+        
+        console.log("All event listeners added successfully!");
+      } catch (error) {
+        console.error("Error adding event listeners:", error);
+      }
+    }, 100);
   });
   </script>
 </body>

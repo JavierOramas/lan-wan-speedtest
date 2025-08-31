@@ -1,0 +1,17 @@
+# Python dependencies for NetSpeed app
+# Based on Dockerfile requirements
+
+# Web framework and server
+Flask>=2.3.0
+gunicorn>=21.0.0
+
+# Database
+SQLAlchemy>=2.0.0
+
+# HTTP requests
+requests>=2.31.0
+
+# Speed testing
+speedtest-cli>=2.1.3
+
+# Note: speedtest-cli provides both CLI tool and Python module 'speedtest'

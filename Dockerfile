@@ -26,6 +26,16 @@ ENV WAN_SCHEDULE_CRON="*/30 * * * *"
 # e.g. -e PAGE_URL="http://192.168.0.198:8080"
 ENV PAGE_URL=""
 
+# Web interface URL for Telegram messages (set this at runtime)
+# e.g. -e WEB_URL="http://192.168.0.198:8080"
+ENV WEB_URL="http://localhost:8080"
+
+# Telegram Bot Configuration (set these at runtime)
+# -e TELEGRAM_BOT_TOKEN="your_bot_token_here"
+# -e TELEGRAM_CHAT_ID="your_chat_id_here"
+# -e TELEGRAM_TOPIC_ID="your_topic_id_here"  # Optional: for forum topics
+# e.g. -e TELEGRAM_BOT_TOKEN="123456789:ABCdefGHIjklMNOpqrsTUVwxyz" -e TELEGRAM_CHAT_ID="123456789"
+
 # Gunicorn: 2 workers so UI stays responsive during speed tests
 ENV GUNICORN_CMD_ARGS="--threads=8 --workers=2 --timeout=180 --graceful-timeout=30"
 
